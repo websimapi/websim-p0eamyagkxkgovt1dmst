@@ -1,0 +1,73 @@
+# Actionables
+
+## Planned
+- [ ] Polyphony support (Separate Voice layers).
+- [ ] Fix time signature selector in settings to update time signature and adjust layout of existing notation.
+- [ ] Add 12/8 time signature option to settings modal.
+- [ ] Additional Instrument Parts support (e.g. Piano and Guitar parts in same score).
+- [ ] Add Drum part support (Notation, Playback, and Export).
+
+## In Progress
+
+## Completed
+- [x] Additional Parts support (e.g. Bass Clef Stave).
+- [x] Add 12/8 time signature option to settings.
+- [x] Add Fermata to notation and rendering.
+- [x] Add Fermata playback duration setting.
+- [x] Add Settings Tabs (Score, Audio, Interface).
+- [x] Support for non-quarter time signatures (6/8, 12/8 logic & beaming).
+- [x] Mobile Layout: Responsive rendering on orientation change/resize.
+- [x] Alternate Tuning Systems (Just Intonation, Pythagorean, Meantone).
+- [x] Readdress dynamic hairpins to allow for setting hairpins over a range of notes.
+- [x] Export to WAV/MP3 (Offline bounce).
+- [x] Customizable Base Frequency (A4 = 440Hz vs 432Hz).
+- [x] Articulations: Staccato, Accent, Marcato.
+- [x] Implement Lyrics support.
+- [x] Fix visual connection of bars on the same line (remove double barlines).
+- [x] Better Rest decomposition during MIDI import.
+- [x] Local Database Storage (Save/Load Scores).
+- [x] Add Dynamics support (p, f, mf) with visual and audio feedback.
+- [x] Fix bug where keyboard input sometimes registers double notes (likely due to key repeat).
+- [x] Ensure UI is globally non-selectable (user-select: none) to prevent accidental highlighting.
+- [x] Implement MIDI file import.
+- [x] Add display format settings modal (bars per line, wrapping).
+- [x] Add settings for Clef and Time Signature repetition frequency.
+- [x] Implement File Menu (New, Save JSON, Open JSON).
+- [x] Add more instruments (Synth, Strings, Flute presets).
+- [x] Refine audio playback for slurred notes (Legato).
+- [x] Refine visual selection feedback (Colorize accidentals/dots).
+- [x] Implement Diatonic Transposition (Arrow Up/Down).
+- [x] Visual Slurs.
+- [x] Refine navigation UX (Keyboard shortcuts).
+- [x] Implement History System (Undo/Redo).
+- [x] Visual Ties.
+- [x] Note Navigation (Prev/Next selection).
+- [x] "Play from selection" functionality.
+- [x] Advanced accidental handling (smart context + enharmonic toggle).
+- [x] Enable editing duration of selected notes.
+- [x] Fix Piano UI interaction (instant touch/click response).
+- [x] Optimization for very large scores (Chunked Canvas Rendering).
+- [x] Add Key Signature support.
+- [x] Fix `IncompleteVoice` rendering error.
+- [x] Improve Piano UI mouse controls (glissando support).
+- [x] Initialize Project Documentation.
+- [x] Define basic HTML structure.
+- [x] Implement core `State` management.
+- [x] Setup `VexFlow` rendering pipeline.
+- [x] Build Virtual Piano UI.
+- [x] Create Web Audio synthesizer.
+- [x] Wire up Main controller.
+- [x] Implement saving/loading to LocalStorage.
+- [x] Add ability to delete the last note (Undo).
+- [x] Add "Rest" input mode.
+- [x] Add support for chords.
+- [x] Export to MusicXML.
+- [x] Implement playback cursor visualization.
+- [x] Add "Delete Selected Note" feature.
+- [x] Add copy/paste functionality.
+- [x] Implement Auto-Beaming for notes.
+- [x] Enhance audio synthesis (Dual-oscillator + Compressor).
+- [x] Add Metronome playback support.
+- [x] Implement measure numbering in renderer.
+- [x] Refine mobile interactions (overscroll, touch targets).
+- [x] Add Tenuto articulation support.

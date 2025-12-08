@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LiteScore Mobile</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Music&display=swap" rel="stylesheet">
+    <!-- Import Map for VexFlow and MidiWriter -->
+    <script type="importmap">
+        {
+            "imports": {
+                "vexflow": "https://esm.sh/vexflow@4.2.3",
+                "midi-writer-js": "https://esm.sh/midi-writer-js@2.1.4",
+                "@tonejs/midi": "https://esm.sh/@tonejs/midi@2.0.28"
+            }
+        }
+    </script>
+</head>
+<body>
+    <div id="app">
+        <!-- Top Toolbar -->
+        <header class="toolbar">
+            <div class="logo">LiteScore</div>
+            <div class="controls">
+                <button id="btn-undo-history" class="icon-btn" aria-label="Undo History">
+                    <div class="svg-icon" style="--mask: url('/Undo.svg')"></div>
+                </button>
+                <button id="btn-redo-history" class="icon-btn" aria-label="Redo History">
+                    <div class="svg-icon" style="--mask: url('/Redo.svg')"></div>
+                </button>
+                <div class="separator" style="height: 20px; margin: 0 4px;"></div>
+                <button id="btn-play" class="icon-btn" aria-label="Play">▶</button>
+                <button id="btn-stop" class="icon-btn" aria-label="Stop">
+                    <div class="svg-icon" style="--mask: url('/Stop%20Button.svg')"></div>
+                </button>
+                <button id="btn-metro" class="icon-btn" aria-label="Metronome">
+                    <div class="svg-icon" style="--mask: url('/Metronome.svg')"></div>
+                </button>
+                <div class="separator" style="height: 20px; margin: 0 4px;"></div>
+                
+                <!-- New Voice Controls -->
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <button id="btn-add-voice" class="text-btn" style="padding: 0 6px; font-size: 0.8rem;">+Voice</button>
+                    <button id="btn-remove-voice" class="text-btn" style="padding: 0 6px; font-size: 0.8rem;">-Voice</button>
+                    <select id="voice-selector" class="text-btn" style="background: transparent; border: 1px solid #e5e7eb; border-radius: 4px; padding: 2px 4px; color: var(--text-color); font-size: 0.8rem; height: 32px; min-width: 80px;">
+                        <option value="0">Voice 1</option>
+                    </select>
+                </div>
+
+                <div class="separator" style="height: 20px; margin: 0 4px;"></div>
+                
+                <div style="display: flex; background: #f3f4f6; border-radius: 6px; overflow: hidden; border: 1px solid #e5e7eb;">
+                    <button id="btn-part-treble" class="text-btn active" style="padding: 0 8px; font-size: 0.8rem; border-radius: 0; background: white;">Treble</button>
+                    <button id="btn-part-bass" class="text-btn" style="padding: 0 8px; font-size: 0.8rem; border-radius: 0;">Bass</button>
+                </div>
+                <div class="separator" style="height: 20px; margin: 0 4px;"></div>
+                <button id="btn-settings" class="icon-btn text-btn" aria-label="Settings">4/4</button>
+                <div class="separator" style="height: 20px; margin: 0 4px;"></div>
+                
+                <!-- New Clef Selector in Toolbar -->
+                <select id="toolbar-clef" class="text-btn" style="background: transparent; border: 1px solid #e5e7eb; border-radius: 4px; padding: 2px 4px; color: var(--text-color); font-size: 0.8rem; height: 32px;">
+                    <option value="treble">🎼 Treble</option>
+                    <option value="bass">𝄢 Bass</option>
+                    <option value="alto">Alto</option>
+                    <option value="tenor">Tenor</option>
+                    <option value="percussion">Perc.</option>
+                </select>
+
+                <button id="btn-help" class="icon-btn" aria-label="Help">?</button>
+                <button id="btn-menu" class="icon-btn" aria-label="Menu">☰</button>
+            </div>
+        </header>
+
+        <!-- Notation Viewport -->
+        <main id="score-container">
+            <div id="canvas-wrapper"></div>
+        </main>
+
+        <!-- Bottom Controls -->
+        <footer class="input-area">
+            <!-- Duration Selector -->
+            <div class="duration-bar" id="duration-controls">
+                <button data-duration="w" class="dur-btn music-font" aria-label="Whole Note">&#x1D15D;</button>
+                <button data-duration="h" class="dur-btn music-font" aria-label="Half Note">&#x1D15E;</button>
+                <button data-duration="q" class="dur-btn active music-font" aria-label="Quarter Note">&#x1D15F;</button>
+                <button data-duration="8" class="dur-btn music-font" aria-label="Eighth Note">&#x1D160;</button>
+                <button data-duration="16" class="dur-btn music-font" aria-label="Sixteenth Note">&#x1D161;</button>
+                <button data-duration="32" class="dur-btn music-font" aria-label="Thirty-second Note">&#x1D162;</button>
+                <button data-duration="64" class="dur-btn music-font" aria-label="Sixty-fourth Note">&#x1D163;</button>
+                <button data-duration="128" class="dur-btn music-font" aria-label="128th Note">&#x1D164;</button>
+                <div class="separator"></div>
+                <button id="btn-dot" class="dur-btn" aria-label="Dotted Note">.</button>
+                <button id="btn-triplet" class="dur-btn" aria-label="Triplet">3</button>
+                <button id="btn-tie" class="dur-btn" aria-label="Tie">‿</button>
+                <button id="btn-slur" class="dur-btn" aria-label="Slur">
+                    <div class="svg-icon" style="--mask: url('/Slur.svg'); background-color: currentColor;"></div>
+                </button>
+                <div class="separator"></div>
+                <button id="btn-copy" class="dur-btn" aria-label="Copy">
+                    <div class="svg-icon" style="--mask: url('/Copy.svg'); background-color: currentColor;"></div>
+                </button>
+                <button id="btn-paste" class="dur-btn" aria-label="Paste">
+                    <div class="svg-icon" style="--mask: url('/Paste.svg'); background-color: currentColor;"></div>
+                </button>
+                <div class="separator"></div>
+                <button id="btn-prev" class="dur-btn" aria-label="Select Previous">←</button>
+                <button id="btn-next" class="dur-btn" aria-label="Select Next">→</button>
+                <div class="separator"></div>
+                <button id="btn-rest" class="dur-btn music-font" aria-label="Rest">&#x1D13D;</button>
+                <button id="btn-chord" class="dur-btn" aria-label="Chord Mode">⋮</button>
+                <button id="btn-en" class="dur-btn" aria-label="Enharmonic Swap">♯/♭</button>
+                <button id="btn-trans-up" class="dur-btn" aria-label="Transpose Up">↑</button>
+                <button id="btn-trans-down" class="dur-btn" aria-label="Transpose Down">↓</button>
+                <button id="btn-delete" class="dur-btn" aria-label="Delete Note">⌫</button>
+            </div>
+
+            <!-- Virtual Piano -->
+            <div class="piano-scroll" id="piano-container">
+                <div class="piano" id="piano">
+                    <!-- Keys generated by JS -->
+                </div>
+            </div>
+            
+            <!-- Second Toolbar Row (Dynamics & More) -->
+            <div class="duration-bar" style="border-top: 1px solid var(--border-color); background: #fafafa;">
+                <span style="font-size: 0.8rem; color: #6b7280; margin-right: 5px;">Dynamics:</span>
+                <button data-dynamic="pppp" class="dur-btn" style="font-family: serif; font-style: italic; font-weight: bold;">pppp</button>
+                <button data-dynamic="ppp" class="dur-btn" style="font-family: serif; font-style: italic; font-weight: bold;">ppp</button>
+                <button data-dynamic="pp" class="dur-btn" style="font-family: serif; font-style: italic; font-weight: bold;">pp</button>
+                <button data-dynamic="p" class="dur-btn" style="font-family: serif; font-style: italic; font-weight: bold;">p</button>
+                <button data-dynamic="mp" class="dur-btn" style="font-family: serif; font-style: italic; font-weight: bold;">mp</button>
+                <button data-dynamic="mf" class="dur-btn" style="font-family: serif; font-style: italic; font-weight: bold;">mf</button>
+                <button data-dynamic="f" class="dur-btn" style="font-family: serif; font-style: italic; font-weight: bold;">f</button>
+                <button data-dynamic="ff" class="dur-btn" style="font-family: serif; font-style: italic; font-weight: bold;">ff</button>
+                <button data-dynamic="fff" class="dur-btn" style="font-family: serif; font-style: italic; font-weight: bold;">fff</button>
+                <button data-dynamic="ffff" class="dur-btn" style="font-family: serif; font-style: italic; font-weight: bold;">ffff</button>
+                <div class="separator"></div>
+                <button id="btn-staccato" class="dur-btn" aria-label="Staccato" title="Staccato">.</button>
+                <button id="btn-accent" class="dur-btn" aria-label="Accent" title="Accent">&gt;</button>
+                <button id="btn-marcato" class="dur-btn" aria-label="Marcato" title="Marcato">^</button>
+                <button id="btn-tenuto" class="dur-btn" aria-label="Tenuto" title="Tenuto">—</button>
+                <div class="separator"></div>
+                <button id="btn-fermata" class="dur-btn" aria-label="Fermata" title="Fermata">𝄐</button>
+                <button id="btn-sfz" class="dur-btn" aria-label="Sforzando" title="Sforzando" style="font-family: serif; font-style: italic; font-weight: bold;">sfz</button>
+                <button id="btn-fz" class="dur-btn" aria-label="Forzando" title="Forzando" style="font-family: serif; font-style: italic; font-weight: bold;">fz</button>
+                <button id="btn-cresc" class="dur-btn" aria-label="Crescendo" title="Crescendo" style="font-family: serif; font-style: italic; font-weight: bold; font-size: 1.2rem;  font-height: 50%; font-width: 200%;">&lt;</button>
+                <button id="btn-decresc" class="dur-btn" aria-label="Decrescendo" title="Decrescendo" style="font-family: serif; font-style: italic; font-weight: bold; font-size: 1.2rem; font-height:50%; font-width: 200%;">&gt;</button>
+                <div class="separator"></div>
+                <button id="btn-lyrics" class="dur-btn" aria-label="Add Lyrics" style="font-size: 1rem; font-weight: 500;">Lyrics</button>
+                <div class="separator"></div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="max-width: 400px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">Settings</h3>
+                <button id="btn-modal-close" class="text-btn">Done</button>
+            </div>
+            
+            <div class="tabs" style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb;">
+                <button class="tab-btn active" data-tab="score">Score</button>
+                <button class="tab-btn" data-tab="audio">Audio</button>
+                <button class="tab-btn" data-tab="interface">Interface</button>
+            </div>
+
+            <div id="tab-score" class="tab-content">
+                <div class="setting-section">
+                    <label for="bars-per-line">Bars Per Line (0 = Auto)</label>
+                    <input type="number" id="bars-per-line" min="0" max="8" value="0" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #e5e7eb;">
+                </div>
+                
+                <div class="setting-section" style="text-align: left; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="chk-show-headers" checked style="width: 20px; height: 20px;">
+                    <label for="chk-show-headers" style="margin: 0; font-weight: normal;">Repeat Clef/Key/Time</label>
+                </div>
+
+                <div class="setting-section" style="text-align: left; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="chk-single-line" style="width: 20px; height: 20px;">
+                    <label for="chk-single-line" style="margin: 0; font-weight: normal;">Single Line View</label>
+                </div>
+                
+                <div class="setting-section" style="text-align: left; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="chk-show-note-names" style="width: 20px; height: 20px;">
+                    <label for="chk-show-note-names" style="margin: 0; font-weight: normal;">Show Note Names</label>
+                </div>
+
+                <h4>Time Signature</h4>
+                <div class="ts-grid">
+                    <button class="ts-option active" data-ts="4/4">4/4</button>
+                    <button class="ts-option" data-ts="3/4">3/4</button>
+                    <button class="ts-option" data-ts="2/4">2/4</button>
+                    <button class="ts-option" data-ts="5/4">5/4</button>
+                    <button class="ts-option" data-ts="6/8">6/8</button>
+                    <button class="ts-option" data-ts="12/8">12/8</button>
+                </div>
+            </div>
+
+            <div id="tab-audio" class="tab-content hidden">
+                <div class="setting-section">
+                    <label for="tempo-slider">Tempo: <span id="tempo-val">120</span> BPM</label>
+                    <input type="range" id="tempo-slider" min="40" max="240" step="5" value="120">
+                </div>
+
+                <div class="setting-section">
+                    <label for="key-select">Key Signature</label>
+                    <select id="key-select" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #e5e7eb;">
+                        <option value="C">C Major / A Minor</option>
+                        <option value="G">G Major / E Minor</option>
+                        <option value="D">D Major / B Minor</option>
+                        <option value="A">A Major / F# Minor</option>
+                        <option value="E">E Major / C# Minor</option>
+                        <option value="B">B Major / G# Minor</option>
+                        <option value="F#">F# Major / D# Minor</option>
+                        <option value="C#">C# Major / A# Minor</option>
+                        <option value="F">F Major / D Minor</option>
+                        <option value="Bb">Bb Major / G Minor</option>
+                        <option value="Eb">Eb Major / C Minor</option>
+                        <option value="Ab">Ab Major / F Minor</option>
+                        <option value="Db">Db Major / Bb Minor</option>
+                        <option value="Gb">Gb Major / Eb Minor</option>
+                        <option value="Cb">Cb Major / Ab Minor</option>
+                    </select>
+                </div>
+
+                <div class="setting-section">
+                    <label for="inst-select">Instrument</label>
+                    <select id="inst-select" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #e5e7eb;">
+                        <option value="guitar" selected>Acoustic Guitar (Modeled)</option>
+                        <option value="piano">Grand Piano (Sampled)</option>
+                        <option value="synth">Synth Lead</option>
+                        <option value="strings">Synth Strings 1</option>
+                        <option value="flute">Flute</option>
+                    </select>
+                </div>
+
+                <div class="setting-section">
+                    <label for="base-freq-input">Base Frequency (A4)</label>
+                    <input type="number" id="base-freq-input" value="440" min="400" max="500" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #e5e7eb;">
+                </div>
+
+                <div class="setting-section">
+                    <label for="tuning-select">Tuning System</label>
+                    <select id="tuning-select" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #e5e7eb;">
+                        <option value="et">Equal Temperament (12-TET)</option>
+                        <option value="just">Just Intonation (5-Limit)</option>
+                        <option value="pyth">Pythagorean Tuning</option>
+                        <option value="mean">Quarter-Comma Meantone</option>
+                        <option value="werck">Werckmeister III</option>
+                    </select>
+                </div>
+                
+                <div class="setting-section">
+                    <label for="fermata-scale-input">Fermata Duration (x)</label>
+                    <input type="number" id="fermata-scale-input" value="2.0" min="1.0" max="4.0" step="0.1" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #e5e7eb;">
+                </div>
+
+                <div class="setting-section">
+                    <label for="midi-input">MIDI Input Device</label>
+                    <select id="midi-input" style="width: 100%; padding: 8px; border-radius: 4px; border: 1px solid #e5e7eb;">
+                        <option value="">None</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="tab-interface" class="tab-content hidden">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Presets</label>
+                    <div style="display: flex; gap: 5px;">
+                        <button id="btn-layout-beginner" class="text-btn" style="flex:1; border: 1px solid #e5e7eb; padding: 5px;">Beginner</button>
+                        <button id="btn-layout-inter" class="text-btn" style="flex:1; border: 1px solid #e5e7eb; padding: 5px;">Normal</button>
+                        <button id="btn-layout-adv" class="text-btn" style="flex:1; border: 1px solid #e5e7eb; padding: 5px;">Advanced</button>
+                    </div>
+                </div>
+
+                <div class="setting-section" style="text-align: left; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="chk-show-piano" checked style="width: 20px; height: 20px;">
+                    <label for="chk-show-piano" style="margin: 0; font-weight: normal;">Show Piano</label>
+                </div>
+                <div class="setting-section" style="text-align: left; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="chk-show-durations" checked style="width: 20px; height: 20px;">
+                    <label for="chk-show-durations" style="margin: 0; font-weight: normal;">Show Duration Toolbar</label>
+                </div>
+                <div class="setting-section" style="text-align: left; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="chk-show-dynamics" checked style="width: 20px; height: 20px;">
+                    <label for="chk-show-dynamics" style="margin: 0; font-weight: normal;">Show Dynamics Toolbar</label>
+                </div>
+                 <div class="setting-section" style="text-align: left; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="chk-show-edit-tools" checked style="width: 20px; height: 20px;">
+                    <label for="chk-show-edit-tools" style="margin: 0; font-weight: normal;">Show Edit Tools (Copy/Paste/Transpose)</label>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <div id="menu-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <h3>File Menu</h3>
+            <div class="menu-list">
+                <button id="btn-menu-new" class="menu-item">
+                    <span>📄 New Score</span>
+                </button>
+                <button id="btn-menu-save" class="menu-item">
+                    <span>💾 Save Project (.json)</span>
+                </button>
+                <button id="btn-menu-open" class="menu-item">
+                    <span>📂 Open Project (.json)</span>
+                </button>
+                <div style="height: 1px; background: #e5e7eb; margin: 5px 0;"></div>
+                <button id="btn-menu-save-db" class="menu-item">
+                    <span>☁ Save to Library</span>
+                </button>
+                <button id="btn-menu-open-db" class="menu-item">
+                    <span>☁ Open from Library</span>
+                </button>
+                <div style="height: 1px; background: #e5e7eb; margin: 5px 0;"></div>
+                <button id="btn-menu-export-xml" class="menu-item">
+                    <span>⬇ Export MusicXML</span>
+                </button>
+                <button id="btn-menu-export-midi" class="menu-item">
+                    <span>🎵 Export MIDI</span>
+                </button>
+                <button id="btn-menu-export-abc" class="menu-item">
+                    <span>🔤 Export ABC</span>
+                </button>
+                <div style="height: 1px; background: #e5e7eb; margin: 5px 0;"></div>
+                <button id="btn-menu-export-wav" class="menu-item">
+                    <span>🎧 Export Audio (WAV)</span>
+                </button>
+            </div>
+            <button id="btn-menu-close" class="text-btn" style="margin-top: 15px;">Close</button>
+        </div>
+    </div>
+    
+    <div id="library-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <h3>Score Library</h3>
+            <div id="library-list" class="menu-list" style="max-height: 50vh; overflow-y: auto; min-height: 100px;">
+                <!-- Items injected here -->
+                <p style="color: #6b7280;">Loading...</p>
+            </div>
+            <button id="btn-library-close" class="text-btn" style="margin-top: 15px;">Close</button>
+        </div>
+    </div>
+    
+    <!-- Hidden File Input for Upload -->
+    <input type="file" id="file-upload" accept=".json,.mid,.midi" style="display: none;">
+
+    <div id="help-modal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content help-content">
+            <h3>Quick Guide</h3>
+            <div class="help-scroll">
+                <section>
+                    <h4>Input Methods</h4>
+                    <p><strong>Piano:</strong> Tap keys or type <strong>A-G</strong> to add notes.</p>
+                    <p><strong>Parts:</strong> Toggle <strong>Treble / Bass</strong> in the toolbar to switch staves.</p>
+                    <p><strong>Octave:</strong> Use <strong>[</strong> and <strong>]</strong> keys to shift (Range 0-8).</p>
+                    <p><strong>Chords:</strong> Toggle <strong>⋮</strong> to stack notes on input.</p>
+                    <p><strong>Rests:</strong> Toggle <span class="music-font" style="font-size: 1.2rem;">&#x1D13D;</span> or press <strong>R</strong>.</p>
+                </section>
+                <section>
+                    <h4>Editing Tools</h4>
+                    <ul class="help-list">
+                        <li><strong>Selection:</strong> Click note. <strong>Shift+Click</strong> for range.</li>
+                        <li><strong>Copy/Paste:</strong> Buttons or <strong>Ctrl+C / Ctrl+V</strong>.</li>
+                        <li><strong>Transpose:</strong> <strong>↑ / ↓</strong> keys or arrow buttons.</li>
+                        <li><strong>Enharmonic:</strong> <strong>♯/♭</strong> swaps spelling (e.g. C# ↔ Db).</li>
+                        <li><strong>Ties/Slurs:</strong> Select note(s) → <strong>‿</strong> (Tie) or Slur icon.</li>
+                        <li><strong>Dynamics:</strong> Select range → <strong>&lt; / &gt;</strong> (Hairpins).</li>
+                        <li><strong>Articulations:</strong> <strong>.</strong> Staccato, <strong>&gt;</strong> Accent, <strong>^</strong> Marcato.</li>
+                        <li><strong>Lyrics:</strong> Tap 'Lyrics' to add text to selected note.</li>
+                    </ul>
+                </section>
+                <section>
+                    <h4>Keyboard Shortcuts</h4>
+                    <div class="shortcut-grid">
+                        <span>Space</span> <span>Play / Stop</span>
+                        <span>1 - 5</span> <span>Duration (Whole to 16th)</span>
+                        <span>. (Period)</span> <span>Toggle Dotted</span>
+                        <span>T</span> <span>Toggle Triplet</span>
+                        <span>R</span> <span>Toggle Rest Mode</span>
+                        <span>M</span> <span>Toggle Metronome</span>
+                        <span>Ctrl+Z</span> <span>Undo</span>
+                        <span>Ctrl+Y</span> <span>Redo</span>
+                        <span>Bksp/Del</span> <span>Delete Selection</span>
+                        <span>[ / ]</span> <span>Octave Down / Up</span>
+                        <span>← / →</span> <span>Select Previous/Next</span>
+                    </div>
+                </section>
+                <section>
+                    <h4>Menu & Settings</h4>
+                    <p><strong>☰ Menu:</strong> Save/Load Project, Export Audio/MIDI/XML.</p>
+                    <p><strong>Settings (4/4):</strong> Change Tempo, Key, Time Sig, Instrument.</p>
+                </section>
+            </div>
+            <button id="btn-help-close" class="text-btn">Got it</button>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal hidden" style="z-index: 2000;">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content" style="border: 2px solid #ef4444; width: 90%; max-width: 400px;">
+            <h3 style="color: #ef4444; margin-top: 0;">Application Error</h3>
+            <p>An unexpected error occurred:</p>
+            <div id="error-msg" style="word-break: break-all; text-align: left; background: #fef2f2; color: #b91c1c; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.85rem; margin: 10px 0; max-height: 200px; overflow-y: auto;"></div>
+            <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                <button id="btn-error-copy" class="text-btn" style="color: #374151;">Copy Error</button>
+                <button id="btn-error-dismiss" class="text-btn" style="background: #ef4444; color: white; padding: 8px 16px; border-radius: 4px;">Dismiss</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+</body>
+</html>
